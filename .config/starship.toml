@@ -1,0 +1,11 @@
+[python]
+detect_files = ["pyproject.toml", "requirements.txt"]
+detect_folders = []
+detect_extensions = []
+
+[custom.godot]
+description = "Godot project"
+command = "echo Godot"
+when = "test -f project.godot"
+symbol = "🎮 "
+
