@@ -1,0 +1,9 @@
+\.git
+\.gitignore
+\.stow-local-ignore
+resources
+README\.md
+LICENSE\.md
+install\.sh
+uninstall\.sh
+\.placeholder
