@@ -92,7 +92,7 @@ auto=""
 auto_nobak=""
 restored=0
 
-while IFS= read -r f; do
+while IFS= read -r f <&3; do
   [ -z "$f" ] && continue
 
   if [ -e "$HOME/$f.bak" ]; then
@@ -101,7 +101,7 @@ while IFS= read -r f; do
       echo -e "${blue}Backup found:${reset} ~/$f.bak"
       echo -e "  ${green}r${reset})estore backup  ${green}R${reset})estore all backups  ${cyan}c${reset})opy from repo  ${cyan}C${reset})opy all from repo"
       while true; do
-        read -rp "  > " choice
+        read -rp "  > " choice </dev/tty
         case "$choice" in
           r) action="restore"; break ;;
           R) action="restore"; auto="restore"; break ;;
@@ -131,7 +131,7 @@ while IFS= read -r f; do
       echo -e "${yellow}No backup:${reset} ~/$f"
       echo -e "  ${cyan}c${reset})opy from repo  ${cyan}C${reset})opy all  ${dim}s${reset})kip  ${dim}S${reset})kip all"
       while true; do
-        read -rp "  > " choice
+        read -rp "  > " choice </dev/tty
         case "$choice" in
           c) action="copy"; break ;;
           C) action="copy"; auto_nobak="copy"; break ;;
@@ -154,7 +154,7 @@ while IFS= read -r f; do
     fi
   fi
   restored=$((restored + 1))
-done <<< "$targets"
+done 3<<< "$targets"
 
 echo ""
 echo -e "${green}Done.${reset} Config files are now standalone copies — no longer linked to ${dim}~/dotfiles/${reset}"

@@ -25,7 +25,7 @@ for d in */; do
 done
 
 # Detect hostname and match to a package
-this_host=$(hostname)
+this_host=$(cat /etc/hostname 2>/dev/null || hostnamectl --static 2>/dev/null || hostname 2>/dev/null || echo "")
 machine=""
 
 # Check if a package already matches this hostname
@@ -130,10 +130,12 @@ targets=$(collect_targets common; $has_custom && collect_targets "$machine" || t
 auto=""
 conflicts=0
 
-while IFS= read -r f; do
+while IFS= read -r f <&3; do
   [ -z "$f" ] && continue
-  [ -L "$HOME/$f" ] && continue
   [ ! -e "$HOME/$f" ] && continue
+  # Skip if already managed by stow (symlink or inside a symlinked directory)
+  resolved=$(readlink -f "$HOME/$f" 2>/dev/null || true)
+  [[ "$resolved" == "$repo_dir/"* ]] && continue
 
   conflicts=$((conflicts + 1))
 
@@ -141,7 +143,7 @@ while IFS= read -r f; do
     echo -e "${yellow}Conflict:${reset} ~/$f"
     echo -e "  ${green}b${reset})ackup  ${green}B${reset})ackup all  ${red}o${reset})verwrite  ${red}O${reset})verwrite all"
     while true; do
-      read -rp "  > " choice
+      read -rp "  > " choice </dev/tty
       case "$choice" in
         b) action="backup"; break ;;
         B) action="backup"; auto="backup"; break ;;
@@ -162,7 +164,7 @@ while IFS= read -r f; do
     rm -rf "$HOME/$f"
     echo -e "  ${red}removed${reset}   ~/$f"
   fi
-done <<< "$targets"
+done 3<<< "$targets"
 
 if [ "$conflicts" -eq 0 ]; then
   echo -e "${dim}No conflicts.${reset}"
