@@ -180,5 +180,59 @@ if $has_custom; then
   echo -e "Stowed ${purple}${machine}${reset}"
 fi
 
+# Git identity setup
+echo ""
+echo -e "${bold}Git identity${reset}"
+echo -e "  ${green}p${reset})ersonal  ${green}w${reset})ork  ${dim}s${reset})kip"
+while true; do
+  read -rp "  > " git_choice </dev/tty
+  case "$git_choice" in
+    p|P) git_mode="personal"; break ;;
+    w|W) git_mode="work"; break ;;
+    s|S) git_mode="skip"; break ;;
+    *) echo -e "  ${dim}p / w / s${reset}" ;;
+  esac
+done
+
+if [ "$git_mode" != "skip" ]; then
+  echo ""
+  read -rp "$(echo -e "Git name: ")" git_name </dev/tty
+
+  if [ "$git_mode" = "personal" ]; then
+    read -rp "$(echo -e "Personal email: ")" git_email </dev/tty
+
+    cat > "$HOME/.gitconfig" <<EOF
+[user]
+	name = $git_name
+	email = $git_email
+[includeIf "gitdir:~/Sites/mccno/"]
+	path = ~/.gitconfig-mccno
+EOF
+    echo -e "Wrote ${cyan}~/.gitconfig${reset} ${dim}(personal + includeIf for ~/Sites/mccno/)${reset}"
+
+    read -rp "$(echo -e "Work email ${dim}(blank to skip)${reset}: ")" work_email </dev/tty
+    if [ -n "$work_email" ]; then
+      cat > "$HOME/.gitconfig-mccno" <<EOF
+[user]
+	email = $work_email
+EOF
+      echo -e "Wrote ${cyan}~/.gitconfig-mccno${reset}"
+    fi
+
+  else
+    # Work machine — single identity
+    read -rp "$(echo -e "Work email: ")" git_email </dev/tty
+
+    cat > "$HOME/.gitconfig" <<EOF
+[user]
+	name = $git_name
+	email = $git_email
+EOF
+    echo -e "Wrote ${cyan}~/.gitconfig${reset} ${dim}(work)${reset}"
+  fi
+else
+  echo -e "${dim}Skipped git identity.${reset}"
+fi
+
 echo ""
 echo -e "${green}Done.${reset} ${dim}Open a new terminal to verify.${reset}"
