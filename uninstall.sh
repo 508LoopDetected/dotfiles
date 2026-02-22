@@ -31,7 +31,7 @@ for d in */; do
   relative="${target#"$name"/}"
   if [ -L "$HOME/$relative" ]; then
     resolved=$(readlink -f "$HOME/$relative" 2>/dev/null || true)
-    if [[ "$resolved" == "$repo_dir/"* ]]; then
+    if [[ "$resolved" == "$repo_dir/$name/"* ]]; then
       stowed+=("$name")
     fi
   fi
@@ -126,18 +126,18 @@ while IFS= read -r f <&3; do
       echo -e "  ${cyan}copied${reset}   ~/$f ${dim}(from repo, .bak removed)${reset}"
     fi
   else
-    # No .bak — ask whether to copy from repo or skip entirely
+    # No .bak — file only exists because of stow; keep a copy or remove
     if [ -z "$auto_nobak" ]; then
-      echo -e "${yellow}No backup:${reset} ~/$f"
-      echo -e "  ${cyan}c${reset})opy from repo  ${cyan}C${reset})opy all  ${dim}s${reset})kip  ${dim}S${reset})kip all"
+      echo -e "${dim}No original:${reset} ~/$f"
+      echo -e "  ${cyan}k${reset})eep copy  ${cyan}K${reset})eep all  ${red}r${reset})emove  ${red}R${reset})emove all"
       while true; do
         read -rp "  > " choice </dev/tty
         case "$choice" in
-          c) action="copy"; break ;;
-          C) action="copy"; auto_nobak="copy"; break ;;
-          s) action="skip"; break ;;
-          S) action="skip"; auto_nobak="skip"; break ;;
-          *) echo -e "  ${dim}c / C / s / S${reset}" ;;
+          k) action="copy"; break ;;
+          K) action="copy"; auto_nobak="copy"; break ;;
+          r) action="skip"; break ;;
+          R) action="skip"; auto_nobak="skip"; break ;;
+          *) echo -e "  ${dim}k / K / r / R${reset}" ;;
         esac
       done
     else
@@ -148,9 +148,9 @@ while IFS= read -r f <&3; do
       mkdir -p "$(dirname "$HOME/$f")"
       cp "$repo_dir/common/$f" "$HOME/$f" 2>/dev/null \
         || for s in "${stowed[@]}"; do cp "$repo_dir/$s/$f" "$HOME/$f" 2>/dev/null && break; done
-      echo -e "  ${cyan}copied${reset}   ~/$f ${dim}(from repo)${reset}"
+      echo -e "  ${cyan}kept${reset}     ~/$f ${dim}(copied from repo)${reset}"
     else
-      echo -e "  ${dim}skipped${reset} ~/$f"
+      echo -e "  ${red}removed${reset}  ~/$f"
     fi
   fi
   restored=$((restored + 1))

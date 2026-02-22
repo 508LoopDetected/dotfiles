@@ -1,6 +1,6 @@
 # Shared zshrc — sourced by machine-specific .zshrc
 
-export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
+export PATH=$HOME/.bun/bin:$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
 
 # Oh My Zsh
 export ZSH="$HOME/.oh-my-zsh"

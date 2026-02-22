@@ -116,6 +116,12 @@ else
 fi
 echo ""
 
+# Track actions for summary
+summary_backed=()
+summary_overwritten=()
+summary_linked=()
+summary_written=()
+
 # Collect all target paths from both packages (excluding .placeholder)
 collect_targets() {
   local pkg="$1"
@@ -160,9 +166,11 @@ while IFS= read -r f <&3; do
     mkdir -p "$(dirname "$HOME/$f.bak")"
     mv "$HOME/$f" "$HOME/$f.bak"
     echo -e "  ${blue}backed up${reset} ~/$f ${dim}-> ~/$f.bak${reset}"
+    summary_backed+=("~/$f -> ~/$f.bak")
   else
     rm -rf "$HOME/$f"
     echo -e "  ${red}removed${reset}   ~/$f"
+    summary_overwritten+=("~/$f")
   fi
 done 3<<< "$targets"
 
@@ -174,10 +182,16 @@ echo ""
 # Stow
 stow common
 echo -e "Stowed ${cyan}common${reset}"
+while IFS= read -r f; do
+  summary_linked+=("~/$f -> dotfiles/common/$f")
+done < <(collect_targets common)
 
 if $has_custom; then
   stow "$machine"
   echo -e "Stowed ${purple}${machine}${reset}"
+  while IFS= read -r f; do
+    summary_linked+=("~/$f -> dotfiles/$machine/$f")
+  done < <(collect_targets "$machine")
 fi
 
 # Git identity setup
@@ -205,19 +219,31 @@ if [ "$git_mode" != "skip" ]; then
 [user]
 	name = $git_name
 	email = $git_email
-[includeIf "gitdir:~/Sites/mccno/"]
-	path = ~/.gitconfig-mccno
 EOF
-    echo -e "Wrote ${cyan}~/.gitconfig${reset} ${dim}(personal + includeIf for ~/Sites/mccno/)${reset}"
+    summary_written+=("~/.gitconfig (personal)")
 
-    read -rp "$(echo -e "Work email ${dim}(blank to skip)${reset}: ")" work_email </dev/tty
-    if [ -n "$work_email" ]; then
-      cat > "$HOME/.gitconfig-mccno" <<EOF
+    read -rp "$(echo -e "Taking work home? Directory ${dim}(e.g. ~/Sites/work — blank to skip)${reset}: ")" work_dir </dev/tty
+    if [ -n "$work_dir" ]; then
+      read -rp "$(echo -e "Work email: ")" work_email </dev/tty
+      work_name=$(basename "$work_dir")
+      work_config=".gitconfig-${work_name}"
+
+      [[ "$work_dir" != */ ]] && work_dir="${work_dir}/"
+
+      cat >> "$HOME/.gitconfig" <<EOF
+[includeIf "gitdir:${work_dir}"]
+	path = ~/${work_config}
+EOF
+
+      cat > "$HOME/${work_config}" <<EOF
 [user]
 	email = $work_email
 EOF
-      echo -e "Wrote ${cyan}~/.gitconfig-mccno${reset}"
+      echo -e "Wrote ${cyan}~/${work_config}${reset}"
+      summary_written+=("~/${work_config} (work override for ${work_dir})")
     fi
+
+    echo -e "Wrote ${cyan}~/.gitconfig${reset}"
 
   else
     # Work machine — single identity
@@ -228,10 +254,35 @@ EOF
 	name = $git_name
 	email = $git_email
 EOF
-    echo -e "Wrote ${cyan}~/.gitconfig${reset} ${dim}(work)${reset}"
+    echo -e "Wrote ${cyan}~/.gitconfig${reset}"
+    summary_written+=("~/.gitconfig (work)")
   fi
 else
   echo -e "${dim}Skipped git identity.${reset}"
+fi
+
+# Summary
+echo ""
+echo -e "${bold}Summary${reset}"
+
+if [ ${#summary_overwritten[@]} -gt 0 ]; then
+  echo -e "  ${red}Overwritten:${reset}"
+  for f in "${summary_overwritten[@]}"; do echo -e "    ${dim}${f}${reset}"; done
+fi
+
+if [ ${#summary_backed[@]} -gt 0 ]; then
+  echo -e "  ${blue}Backed up:${reset}"
+  for f in "${summary_backed[@]}"; do echo -e "    ${dim}${f}${reset}"; done
+fi
+
+if [ ${#summary_linked[@]} -gt 0 ]; then
+  echo -e "  ${green}Linked:${reset}"
+  for f in "${summary_linked[@]}"; do echo -e "    ${dim}${f}${reset}"; done
+fi
+
+if [ ${#summary_written[@]} -gt 0 ]; then
+  echo -e "  ${cyan}Written:${reset}"
+  for f in "${summary_written[@]}"; do echo -e "    ${dim}${f}${reset}"; done
 fi
 
 echo ""
