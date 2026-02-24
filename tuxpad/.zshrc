@@ -29,5 +29,9 @@ function touchpad() {
 }
 alias trackpad=touchpad
 
+## Out-of-Memory Crash/Freeze Logging ##
+alias oomlog="journalctl -u earlyoom | grep -i kill"
+alias oomcheck=oomlog
+
 # Run purrfetch on new shell sessions
 purrfetch
