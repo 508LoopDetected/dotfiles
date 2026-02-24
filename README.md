@@ -1,6 +1,6 @@
 # dotfiles
 
-My configs/dotfiles managed with [GNU Stow](https://www.gnu.org/software/stow/). However, Stow doesn't manage file backups in the fringe cases where you might want backups but also prefer to avoid full committal to some overkill solution like chezmoi. So instead, here's an host-targeting installer/uninstaller, plus additional logic to support backup/overwrite where desired within a Stow package, plus mild parent/child inheritance. Surely the ideal "Not Quite Chezmoi" package already exists out there, but it seemed just as quick to Roll My Own™ with only what I needed. Does it work though? TBD, haven't tested yet, we'll find out in time as I use it and build upon it.
+My configs/dotfiles managed with [GNU Stow](https://www.gnu.org/software/stow/), plus some additional logic to support parent/child inheritance + config backups. Surely the ideal "Not Quite Chezmoi" package already exists out there, but it seemed just as quick to Roll My Own™ with only what I needed.
 
 ## Structure
 
