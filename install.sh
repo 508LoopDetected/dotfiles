@@ -187,7 +187,8 @@ while IFS= read -r f; do
 done < <(collect_targets common)
 
 if $has_custom; then
-  stow "$machine"
+  # --override lets machine files take over links already placed by common
+  stow --override='.*' "$machine"
   echo -e "Stowed ${purple}${machine}${reset}"
   while IFS= read -r f; do
     summary_linked+=("~/$f -> dotfiles/$machine/$f")

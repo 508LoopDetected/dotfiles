@@ -4,4 +4,5 @@
 .DS_Store
 Thumbs.db
 .directory
-.gitconfig-mccno
+.gitconfig-*
+common/.config/nvim/lazy-lock.json
