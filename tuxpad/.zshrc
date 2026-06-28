@@ -33,5 +33,13 @@ alias trackpad=touchpad
 alias oomlog="journalctl -u earlyoom | grep -i kill"
 alias oomcheck=oomlog
 
+## Sony Bravia (tuxstation) HDMI recovery ##
+
+# After the TV is powered off/on, the GPU keeps sending 4K@120+HDR and the Bravia
+# can't re-lock onto it ("no signal"). These force a clean modeset over SSH:
+#   fix-tv      drop tuxstation's TV output to 4K@60 to regain a picture
+#   fix-tv 120  restore 4K@120 once the picture is back
+alias fix-tv="ssh hobbes@tuxstation '~/.local/bin/fix-tv'"
+
 # Run purrfetch on new shell sessions
 purrfetch
