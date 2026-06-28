@@ -273,6 +273,37 @@ if [ -d resources/fonts ]; then
   fi
 fi
 
+# Third-party scripts (pulled from official upstream sources)
+echo ""
+echo -e "${bold}Third-party scripts${reset}"
+
+bin_dir="$HOME/.local/bin"
+mkdir -p "$bin_dir"
+
+# Each entry: "name|url"
+# Pin to a tag/commit-sha rather than a branch so upstream changes can't slip in unreviewed.
+third_party_scripts=(
+  "clean|https://raw.githubusercontent.com/architalia/clean/v2.2/src/clean"
+)
+
+for entry in "${third_party_scripts[@]}"; do
+  name="${entry%%|*}"
+  url="${entry#*|}"
+  dest="$bin_dir/$name"
+  if [ -x "$dest" ]; then
+    echo -e "  ${dim}${name} already installed${reset}"
+    continue
+  fi
+  if curl -fsSL "$url" -o "$dest"; then
+    chmod +x "$dest"
+    echo -e "  ${green}installed${reset} ${name} ${dim}-> ~/.local/bin/${name}${reset}"
+    summary_written+=("~/.local/bin/${name} (from upstream)")
+  else
+    rm -f "$dest"
+    echo -e "  ${red}failed${reset} to download ${name} from ${url}"
+  fi
+done
+
 # Git identity setup
 echo ""
 echo -e "${bold}Git identity${reset}"
