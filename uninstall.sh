@@ -18,24 +18,23 @@ reset="\e[0m"
 repo_dir=$(pwd)
 stowed=()
 
-for d in */; do
-  name="${d%/}"
-  case "$name" in
-    common|resources) continue ;;
-    *) ;;
-  esac
+if [ -d profiles ]; then
+  for d in profiles/*/; do
+    name="${d#profiles/}"
+    name="${name%/}"
 
-  # Check if any file in ~ is a symlink into this package
-  target=$(find "$name" -type f ! -name '.placeholder' -print -quit 2>/dev/null)
-  [ -z "$target" ] && continue
-  relative="${target#"$name"/}"
-  if [ -L "$HOME/$relative" ]; then
-    resolved=$(readlink -f "$HOME/$relative" 2>/dev/null || true)
-    if [[ "$resolved" == "$repo_dir/$name/"* ]]; then
-      stowed+=("$name")
+    # Check if any file in ~ is a symlink into this package
+    target=$(find "profiles/$name" -type f ! -name '.placeholder' -print -quit 2>/dev/null)
+    [ -z "$target" ] && continue
+    relative="${target#profiles/$name/}"
+    if [ -L "$HOME/$relative" ]; then
+      resolved=$(readlink -f "$HOME/$relative" 2>/dev/null || true)
+      if [[ "$resolved" == "$repo_dir/profiles/$name/"* ]]; then
+        stowed+=("$name")
+      fi
     fi
-  fi
-done
+  done
+fi
 
 # Check common separately
 common_stowed=false
@@ -74,7 +73,7 @@ collect_targets() {
   fi
 }
 
-targets=$($common_stowed && collect_targets common || true; for s in "${stowed[@]}"; do collect_targets "$s"; done)
+targets=$($common_stowed && collect_targets common || true; for s in "${stowed[@]}"; do collect_targets "profiles/$s"; done)
 
 # Unstow everything first (removes symlinks)
 if $common_stowed; then
@@ -82,7 +81,7 @@ if $common_stowed; then
   echo -e "Unstowed ${cyan}common${reset}"
 fi
 for s in "${stowed[@]}"; do
-  stow -D "$s"
+  stow -d profiles -t "$HOME" -D "$s"
   echo -e "Unstowed ${purple}${s}${reset}"
 done
 echo ""
@@ -121,7 +120,7 @@ while IFS= read -r f <&3; do
     else
       mkdir -p "$(dirname "$HOME/$f")"
       cp "$repo_dir/common/$f" "$HOME/$f" 2>/dev/null \
-        || for s in "${stowed[@]}"; do cp "$repo_dir/$s/$f" "$HOME/$f" 2>/dev/null && break; done
+        || for s in "${stowed[@]}"; do cp "$repo_dir/profiles/$s/$f" "$HOME/$f" 2>/dev/null && break; done
       rm "$HOME/$f.bak"
       echo -e "  ${cyan}copied${reset}   ~/$f ${dim}(from repo, .bak removed)${reset}"
     fi
@@ -147,7 +146,7 @@ while IFS= read -r f <&3; do
     if [ "$action" = "copy" ]; then
       mkdir -p "$(dirname "$HOME/$f")"
       cp "$repo_dir/common/$f" "$HOME/$f" 2>/dev/null \
-        || for s in "${stowed[@]}"; do cp "$repo_dir/$s/$f" "$HOME/$f" 2>/dev/null && break; done
+        || for s in "${stowed[@]}"; do cp "$repo_dir/profiles/$s/$f" "$HOME/$f" 2>/dev/null && break; done
       echo -e "  ${cyan}kept${reset}     ~/$f ${dim}(copied from repo)${reset}"
     else
       echo -e "  ${red}removed${reset}  ~/$f"

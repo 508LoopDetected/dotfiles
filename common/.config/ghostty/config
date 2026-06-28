@@ -47,9 +47,10 @@
 # # Just for example:
 # resize-overlay-duration = 4s 200ms
 
-font-size = 12
+font-size = 14
 #font-family = SpaceMono Nerd Font
-font-family = DMMono Nerd Font
+#font-family = DMMono Nerd Font
+font-family = GeistMono Nerd Font
 # window-padding-x = 2
 
 theme=Flexoki Dark
@@ -65,3 +66,8 @@ keybind = ctrl+shift+equal=equalize_splits
 
 # split in the direction with more room
 keybind = ctrl+shift+s=new_split:auto
+
+# Auto-export TERM=xterm-256color over SSH and install Ghostty's terminfo on
+# remote hosts the first time we connect — fixes backspace/keys on hosts whose
+# terminfo db doesn't know `xterm-ghostty` (Synology, older Debian/RHEL).
+shell-integration-features = ssh-env,ssh-terminfo
