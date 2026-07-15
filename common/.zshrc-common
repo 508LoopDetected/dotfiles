@@ -51,6 +51,48 @@ update() {
 }
 alias upgrade=update
 
+# yt-dlp grabber: video by default, FLAC audio with -a, ./cookies.txt with -c
+#   yoink URL           best video (bv*+ba) merged to mkv
+#   yoink -c URL        ...with cookies.txt (for 1080p Premium etc.)
+#   yoink -a URL        best-quality FLAC audio
+#   yoink -ac URL       FLAC audio + cookies
+# Flags must precede the URL(s); extra yt-dlp flags after the URL pass through.
+yoink() {
+  local audio=0 cookie=0 OPTIND
+  while getopts "ach" opt; do
+    case $opt in
+      a) audio=1 ;;
+      c) cookie=1 ;;
+      h)
+        cat >&2 <<'EOF'
+usage: yoink [-a] [-c] [-h] URL...
+  -a   audio only, best-quality FLAC (default: video)
+  -c   use ./cookies.txt from the current dir (for Premium/logged-in content)
+  -h   show this help
+Combine flags (-ac), pass multiple URLs, and append extra yt-dlp flags after the URL.
+EOF
+        return 0 ;;
+      *) echo "usage: yoink [-a] [-c] [-h] URL..." >&2; return 1 ;;
+    esac
+  done
+  shift $((OPTIND - 1))
+
+  if (( $# == 0 )); then
+    echo "usage: yoink [-a] [-c] [-h] URL..." >&2
+    return 1
+  fi
+
+  local -a args
+  (( cookie )) && args+=(--cookies cookies.txt)
+  if (( audio )); then
+    args+=(-f bestaudio -x --audio-format flac --audio-quality 0 --embed-metadata --embed-thumbnail)
+  else
+    args+=(-f "bv*+ba/b" --merge-output-format mkv)
+  fi
+
+  yt-dlp "${args[@]}" "$@"
+}
+
 # Reference
 # clean - utility to prune pacman orphans + caches
 #
