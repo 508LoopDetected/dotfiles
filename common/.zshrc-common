@@ -93,6 +93,45 @@ EOF
   yt-dlp "${args[@]}" "$@"
 }
 
+# List MY aliases and command-functions defined in ~/.zshrc-common and ~/.zshrc.
+# Unlike the builtin `alias`, this is scoped to my config and includes functions
+# (yoink, update, ...), using the comment block above each function as its blurb.
+# Reads both files by their ~ paths, so on any machine it shows the shared
+# common set plus that machine's own zshrc. Each file's list is sorted A-Z.
+#   aliases            all of them, grouped by file
+#   aliases <term>     filter by name or description (case-insensitive)
+aliases() {
+  local f body
+  for f in ~/.zshrc-common ~/.zshrc; do
+    [ -r "$f" ] || continue
+    body=$(awk -v filter="$1" '
+      function emit(n, kind, desc) {
+        if (filter != "" && index(tolower(n " " desc), tolower(filter)) == 0) return
+        if (kind == "func")
+          printf "  \033[32m%-16s\033[0m \033[2m()%s\033[0m\n", n, (desc ? "  " desc : "")
+        else
+          printf "  \033[32m%-16s\033[0m \033[2m→ %s\033[0m\n", n, desc
+      }
+      /^#/ { c=$0; sub(/^#[[:space:]]?/, "", c); if (cmt == "") cmt=c; next }
+      /^alias[[:space:]]+[A-Za-z0-9_-]+=/ {
+        name=$0; sub(/^alias[[:space:]]+/, "", name)
+        val=name; sub(/=.*/, "", name); sub(/^[^=]*=/, "", val)
+        gsub(/^["'\'']|["'\'']$/, "", val)
+        emit(name, "alias", val); cmt=""; next
+      }
+      /^(function[[:space:]]+)?[A-Za-z0-9_-]+[[:space:]]*\(\)/ || /^function[[:space:]]+[A-Za-z0-9_-]+/ {
+        name=$0; sub(/^(function[[:space:]]+)?/, "", name)
+        sub(/[[:space:]]*\(\).*/, "", name); sub(/[[:space:]].*/, "", name)
+        emit(name, "func", cmt); cmt=""; next
+      }
+      /^[[:space:]]*$/ { next }
+      { cmt="" }
+    ' "$f" | LC_ALL=C sort -f)
+    [ -n "$body" ] && printf "\n\033[1m%s\033[0m\n%s\n" "$f" "$body"
+  done
+  echo
+}
+
 # Reference
 # clean - utility to prune pacman orphans + caches
 #
